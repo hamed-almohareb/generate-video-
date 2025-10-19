@@ -11,6 +11,11 @@ const LOADING_MESSAGES = [
   "لحظات وينتهي الفيديو!",
 ];
 
+/**
+ * Converts a file to a Base64 encoded string.
+ * @param {File} file The file to convert.
+ * @returns {Promise<string>} A promise that resolves with the Base64 encoded string.
+ */
 const fileToBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -19,7 +24,11 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.onerror = (error) => reject(error);
   });
 
-
+/**
+ * The main application component.
+ * Renders the UI for generating AI videos.
+ * @returns {JSX.Element} The rendered component.
+ */
 const App = () => {
   const [script, setScript] = useState('');
   const [style, setStyle] = useState('سينمائي');
@@ -38,6 +47,9 @@ const App = () => {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
+  // This effect manages the display of loading messages.
+  // It starts an interval to cycle through the LOADING_MESSAGES array when `isLoading` is true.
+  // It clears the interval when `isLoading` becomes false or when the component unmounts.
   useEffect(() => {
     if (isLoading) {
       loadingIntervalRef.current = window.setInterval(() => {
@@ -53,6 +65,7 @@ const App = () => {
       }
       setLoadingMessage(LOADING_MESSAGES[0]);
     }
+    // Cleanup function to clear the interval when the component unmounts or `isLoading` changes.
     return () => {
       if (loadingIntervalRef.current) {
         clearInterval(loadingIntervalRef.current);
@@ -60,7 +73,8 @@ const App = () => {
     };
   }, [isLoading]);
   
-  // Clean up object URLs to prevent memory leaks
+  // This effect cleans up the object URL created for the audio file.
+  // It revokes the URL when the component unmounts or the `audioUrl` changes, to prevent memory leaks.
   useEffect(() => {
     return () => {
         if (audioUrl) {
@@ -69,6 +83,11 @@ const App = () => {
     };
   }, [audioUrl]);
 
+  /**
+   * Handles the change event for the image input.
+   * Sets the image file and its Base64 representation.
+   * @param {React.ChangeEvent<HTMLInputElement>} e The change event.
+   */
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -79,6 +98,11 @@ const App = () => {
     e.target.value = ''; // Allow re-selecting the same file
   };
 
+  /**
+   * Handles the change event for the audio input.
+   * Sets the audio file and creates a URL for it.
+   * @param {React.ChangeEvent<HTMLInputElement>} e The change event.
+   */
   const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -92,11 +116,17 @@ const App = () => {
     e.target.value = ''; // Allow re-selecting the same file
   };
 
+  /**
+   * Removes the selected image.
+   */
   const handleRemoveImage = () => {
     setImageFile(null);
     setImageBase64(null);
   };
   
+  /**
+   * Removes the selected audio.
+   */
   const handleRemoveAudio = () => {
     setAudioFile(null);
     if (audioUrl) {
@@ -105,6 +135,10 @@ const App = () => {
     setAudioUrl(null);
   };
 
+  /**
+   * Handles the video generation process.
+   * Sends a request to the AI model to generate a video based on the user's input.
+   */
   const handleGenerateVideo = async () => {
     if (!script.trim() && !imageFile) {
       setError("الرجاء إدخال نص أو رفع صورة لإنشاء الفيديو.");
@@ -176,7 +210,11 @@ const App = () => {
     }
   };
 
-
+  /**
+   * Renders the content of the preview panel.
+   * Displays a loading spinner, the generated video, an error message, or a placeholder.
+   * @returns {JSX.Element} The rendered content.
+   */
   const renderPreviewContent = () => {
     if (isLoading) {
       return (
@@ -227,11 +265,15 @@ const App = () => {
 
   return (
     <>
+      {/* Header section */}
       <header>
         <h1>فيديو بالذكاء الاصطناعي</h1>
       </header>
+      {/* Main content area */}
       <main>
+        {/* Left panel for user controls */}
         <div className="controls-panel">
+          {/* Script input section */}
           <div className="form-group">
             <label htmlFor="script-input">اكتب النص هنا (أو ارفع صورة)</label>
             <textarea
@@ -243,9 +285,11 @@ const App = () => {
               aria-required="true"
             />
           </div>
+          {/* Media upload section */}
            <div className="form-group upload-group">
               <label>إضافة وسائط (اختياري)</label>
               <div className="file-input-container">
+                {/* Image upload */}
                 <div className="file-input-wrapper">
                   <label htmlFor="image-upload" className="upload-button">
                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" > <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /> </svg>
@@ -253,6 +297,7 @@ const App = () => {
                   </label>
                   <input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} disabled={isLoading} />
                 </div>
+                {/* Audio upload */}
                 <div className="file-input-wrapper">
                   <label htmlFor="audio-upload" className="upload-button">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /> </svg>
@@ -261,12 +306,14 @@ const App = () => {
                   <input id="audio-upload" type="file" accept="audio/*" onChange={handleAudioChange} disabled={isLoading} />
                 </div>
               </div>
+              {/* Display selected image file */}
               {imageFile && (
                 <div className="file-info">
                   <span>{imageFile.name}</span>
                   <button onClick={handleRemoveImage} className="remove-file-button" aria-label="إزالة الصورة">&times;</button>
                 </div>
               )}
+              {/* Display selected audio file */}
               {audioFile && (
                 <div className="file-info">
                   <span>{audioFile.name}</span>
@@ -274,6 +321,7 @@ const App = () => {
                 </div>
               )}
             </div>
+          {/* Video style selection */}
           <div className="form-group">
             <label htmlFor="style-select">نمط الفيديو</label>
             <select id="style-select" value={style} onChange={(e) => setStyle(e.target.value)} disabled={isLoading}>
@@ -284,6 +332,7 @@ const App = () => {
               <option>إعلاني</option>
             </select>
           </div>
+          {/* Video length type selection */}
            <div className="form-group">
             <label>نوع الفيديو</label>
             <div className="video-length-control">
@@ -303,6 +352,7 @@ const App = () => {
               </button>
             </div>
           </div>
+          {/* Video duration slider (visible for short videos) */}
           {videoLengthType === 'short' && (
             <div className="form-group">
               <label htmlFor="duration-slider">مدة الفيديو (بالثواني): {duration} ثانية</label>
@@ -323,6 +373,7 @@ const App = () => {
               </div>
             </div>
           )}
+          {/* Aspect ratio selection */}
           <div className="form-group">
             <label htmlFor="aspect-ratio-select">أبعاد الفيديو</label>
             <select id="aspect-ratio-select" value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)} disabled={isLoading}>
@@ -331,6 +382,7 @@ const App = () => {
               <option value="1:1">مربع (1:1)</option>
             </select>
           </div>
+          {/* Voice selection */}
            <div className="form-group">
             <label htmlFor="voice-select">لهجة التعليق الصوتي</label>
             <select id="voice-select" value={voice} onChange={(e) => setVoice(e.target.value)} disabled={isLoading || !!audioFile}>
@@ -341,10 +393,12 @@ const App = () => {
             </select>
              {audioFile && <small className="info-text">تم تعطيل التعليق الصوتي بسبب رفع ملف صوتي.</small>}
           </div>
+          {/* Generate video button */}
           <button className="primary-button" onClick={handleGenerateVideo} disabled={isLoading}>
             {isLoading ? 'جاري الإنشاء...' : 'إنشاء الفيديو'}
           </button>
         </div>
+        {/* Right panel for video preview */}
         <div className="preview-panel" aria-live="polite">
           {renderPreviewContent()}
         </div>
